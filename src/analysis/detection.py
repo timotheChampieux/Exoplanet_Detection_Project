@@ -5,14 +5,26 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 def _get_search_params(lc : lk.LightCurve) :
+
     observation_time = lc.time.value.max() - lc.time.value.min()
+
     max_period = observation_time/3
     min_period = 0.5
     steps = int(observation_time * 500)
+
     if max_period < min_period :
-        return max_period+=min_period,steps,min_period 
+        return max_period+=min_period,steps,min_period
+
     return max_period,steps,min_period 
     
+def _mask_planet(lc, planet_info) :
+
+    period,transit_time,duration = planet_info["period"],planet_info["transit_time"],planet_info["duration"]
+
+    masque = lc.create_transit_mask(period=period, transit_time=transit_time*2, duration=duration)
+    
+    lc_propre = lc[~masque]
+    return lc_propre
 
 def planet_detector(lc : lk.LightCurve) : 
 
