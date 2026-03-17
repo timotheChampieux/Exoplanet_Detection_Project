@@ -72,7 +72,7 @@ def mask_planet(lc : lk.LightCurve, planet_info : dict) ->  lk.LightCurve :
     )
 
     #On garde que les point qui ne sont pas le masque 
-    return  lc[~masque]
+    return  lc[~masque].copy()
 
 def planet_detector(lc : lk.LightCurve, max_planets=10 ) -> list : 
     """
