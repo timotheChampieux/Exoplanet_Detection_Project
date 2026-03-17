@@ -23,7 +23,12 @@ def _get_phase(lc: lk.LightCurve, period: float, epoch_time : float, bin : float
     """
     Replie la courbe de lumière et applique le bin pour réduire le bruit et améliorer la précision
     """
-    return lc.fold(period = period, epoch_time = epoch_time ).bin(bin)
+    folded = lc.fold(period=period, epoch_time=epoch_time)
+    
+    #On nettoie les résidus du masquage pour eviter une erreur fréquente
+    folded = folded.remove_nans()
+    
+    return folded.bin(time_bin_size=bin)
 
 
 def analyze_planets_metrics(lc : lk.LightCurve,planets_list : list, star_radius: float=1 ) -> list : 
