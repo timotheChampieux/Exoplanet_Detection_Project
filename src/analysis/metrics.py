@@ -6,7 +6,7 @@ from .detection import mask_planet
 ##gestion de log
 logger = logging.getLogger(__name__)
 
-def _get_bin_size(lc : lk.LightCurve, planet_info : dict, points_per_transit : int = 50 ) : 
+def _get_bin_size(lc : lk.LightCurve, planet_info : dict, points_per_transit : int = 50 ) -> float: 
     """
     Calcule la taille optimale des bins pour le repliement de phase
     permet d'avoir une résolution suffisament precise et respectant la cadence de l'appareil
