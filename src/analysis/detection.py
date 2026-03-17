@@ -32,7 +32,7 @@ def _run_bls_analysis(lc : lk.LightCurve) -> dict :
     Exécute l'algorithme BLS et extrait les 
     statistiques du meilleur pic.
     """
-    max_p, steps,min_p  = _get_search_params(lc)
+    min_p, max_p, steps = _get_search_params(lc)
 
     periods =  np.linspace(min_p,max_p,steps)
 
@@ -48,13 +48,13 @@ def _run_bls_analysis(lc : lk.LightCurve) -> dict :
     stats = bls.compute_stats(period=best_period, 
                             duration=best_duration, 
                             transit_time=best_t0)
- 
+    best_snr = np.nanmax(bls.snr).value
     result = {
         "period": best_period.value,
         "transit_time": best_t0.value,
         "duration": best_duration.value,
         #si le snr > 7 on decrete que il y a une planète
-        "snr":  stats['snr'],
+        "snr":  best_snr,
         "max_power": bls.max_power.value
     }
     return result
