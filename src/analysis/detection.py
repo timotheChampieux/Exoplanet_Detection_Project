@@ -76,7 +76,10 @@ def planet_detector(lc : lk.LightCurve, max_planets=10 ) -> list :
             logger.info(f"Planète détectée ! Période: {result['period']:.3f} j | SNR: {result['snr']:.2f}")
             planets_found.append(result)
             
-            
+            if abs(result["odd_even_ratio"] - 1.0) > 0.3:
+                logger.warning(f"Signal rejeté (odd/even ratio = {result['odd_even_ratio']}) — probable binaire à éclipses.")
+                current_lc = mask_planet(current_lc, result)
+                continue
             #On masque la planète pour le tour suivant
             if max_planets > 1 :
                 logger.info("Début du masquage de la planète...")
