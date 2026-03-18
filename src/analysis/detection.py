@@ -23,8 +23,7 @@ def _run_bls_analysis(lc : lk.LightCurve) -> dict :
     # Calcul des stats pour obtenir le SNR correct
     stats = bls.compute_stats(period=best_period, duration=best_duration, transit_time=best_t0)
     
-    odd_even_ratio = stats["odd_depth"][0] / stats["even_depth"][0] if stats["even_depth"][0] != 0 else float('inf')
-
+    odd_even_ratio = stats["depth_odd"][0] / stats["depth_even"][0] if stats["depth_even"][0] != 0 else float('inf')    
     return {
         "period": best_period.value,
         "transit_time": best_t0.value,
