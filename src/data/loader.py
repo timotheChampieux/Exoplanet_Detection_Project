@@ -29,8 +29,7 @@ def download_target_data(star_name : str, period_index: int = None, author: str=
 
 
         lc_collection = search.download_all()
-        lc = lc_collection.stitch().normalize()
-        
+        lc = lc_collection.stitch(corrector_func=lambda x: x.normalize())        
         #on informe que c'est tout bon
         logger.info(f"Données {author} téléchargées pour {star_name}")
         
