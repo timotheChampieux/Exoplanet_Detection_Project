@@ -13,7 +13,7 @@ def _run_bls_analysis(lc : lk.LightCurve) -> dict :
     #min_p, max_p, steps = _get_search_params(lc)
 
      #beaucoup plus précis que np.linspace pour détecter des transits courts.
-    bls = lc.to_periodogram(method='bls', minimum_period=0.5, maximum_period=lc.time.value.max()/2)
+    bls = lc.to_periodogram(method='bls', minimum_period=0.5, maximum_period=(lc.time.value.max() - lc.time.value.min()) / 2)
     
     #on recup le meilleur condidat
     best_period = bls.period_at_max_power
@@ -43,8 +43,15 @@ def mask_planet(lc : lk.LightCurve, planet_info : dict) ->  lk.LightCurve :
         duration=planet_info["duration"] * 2
     )
 
+    lc_masked = lc[~mask].remove_nans()
+
      #On filtre la courbe
-    return lc[~mask].remove_nans()
+    return lk.LightCurve(
+        time=lc_masked.time.copy(), 
+        flux=lc_masked.flux.copy(), 
+        flux_err=lc_masked.flux_err.copy(),
+        meta=lc_masked.meta 
+    )
 
 def planet_detector(lc : lk.LightCurve, max_planets=10 ) -> list : 
     """
