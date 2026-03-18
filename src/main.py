@@ -49,13 +49,13 @@ def run_pipeline():
 
         # Valeurs par défaut (Standard de recherche)
         sigma_val = 5
-        win_len = 401
-        pts_transit = 50
+        win_len = 801
+        pts_transit = 70
 
         if advanced == 'o':
             sigma_val = int(input("  > Seuil de nettoyage (Sigma) [Défaut: 5] : ") or 5)
-            win_len = int(input("  > Fenêtre de lissage (Window Length) [Défaut: 401] : ") or 401)
-            pts_transit = int(input("  > Résolution (Points par transit) [Défaut: 50] : ") or 50)
+            win_len = int(input("  > Fenêtre de lissage (Window Length) [Défaut: 401] : ") or 801)
+            pts_transit = int(input("  > Résolution (Points par transit) [Défaut: 150] : ") or 70)
 
         # --- 3. EXÉCUTION DU PIPELINE ---
         
@@ -90,14 +90,14 @@ def run_pipeline():
             for i, p in enumerate(final_results):
                 print(f"\n[CANDIDATE {i+1}]")
                 print(f" > Période orbitale : {p['period']:.4f} jours")
-                print(f" > Rayon            : {p['radius_earth']:.2f} R_terrestre ({p['radius_km']:.0f} km)")
+                print(f" > Rayon            : {p['rayon_terrestre']:.2f} R_terrestre ({p['rayon_km']:.0f} km)")
                 print(f" > Profondeur       : {p['depth_ppm']:.0f} ppm")
                 print(f" > Score (SNR)      : {p['snr']:.2f}")
                 
                 # Interprétation
-                if p['radius_earth'] < 1.5:
+                if p['rayon_terrestre'] < 1.5:
                     print(" > Nature probable  : Rocheuse (Tellurique)")
-                elif p['radius_earth'] < 4.0:
+                elif p['rayon_terrestre'] < 4.0:
                     print(" > Nature probable  : Neptune-like / Super-Terre")
                 else:
                     print(" > Nature probable  : Géante Gazeuse")

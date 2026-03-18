@@ -71,8 +71,17 @@ def mask_planet(lc : lk.LightCurve, planet_info : dict) ->  lk.LightCurve :
         duration=planet_info["duration"] * 3
     )
 
-    #On garde que les point qui ne sont pas le masque 
-    return  lc[~masque].copy()
+     #On filtre la courbe
+    lc_masked = lc[~masque]
+
+    #On creer une nouvelle courbe pour eviter les soucis de chevauchement de masque
+    new_lc = lk.LightCurve(
+        time=lc_masked.time.value, 
+        flux=lc_masked.flux.value, 
+        flux_err=lc_masked.flux_err.value
+    )
+
+    return  new_lc.remove_nans()
 
 def planet_detector(lc : lk.LightCurve, max_planets=10 ) -> list : 
     """
@@ -85,15 +94,21 @@ def planet_detector(lc : lk.LightCurve, max_planets=10 ) -> list :
 
     while len(planets_found)<max_planets : 
         #analyse de la courbe actuelle
+        logger.info(f"Tentative de détection n°{len(planets_found) + 1}...")
         result = _run_bls_analysis(current_lc)
-        
+        logger.info(f"Analyse BLS terminée.")
         #critère de validation
         if result["snr"] > 7 : 
             logger.info(f"Planète détectée ! Période: {result['period']:.3f} j | SNR: {result['snr']:.2f}")
             planets_found.append(result)
-
+            
+            
             #On masque la planète pour le tour suivant
-            current_lc = mask_planet(current_lc,result)
+            if max_planets > 1 :
+                logger.info("Début du masquage de la planète...")
+                current_lc = mask_planet(current_lc,result)
+                logger.info("Masquage réussi.")
+                
         else : 
             if len(planets_found) == 0 : 
                 logger.info("Fin de recherche : aucun signal significatif.")
