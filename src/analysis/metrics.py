@@ -45,10 +45,10 @@ def analyze_planets_metrics(lc : lk.LightCurve,planets_list : list, star_radius:
         actual_lc = lc.copy()
 
         #On masque toute les autres planètes
-        for planet_a_masquer in planets_list : 
-            if planet_a_masquer == planet :
+        for j, planet_a_masquer in enumerate(planets_list):
+            if j == i:
                 continue
-            actual_lc = mask_planet(actual_lc,planet_a_masquer)
+            actual_lc = mask_planet(actual_lc, planet_a_masquer)
             
 
         #calcul résolution et repliement
