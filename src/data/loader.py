@@ -5,8 +5,33 @@ import logging
 logger = logging.getLogger(__name__)
 
 def download_target_data(star_name : str, period_index: None, author: str="Kepler") -> lk.LightCurve :         
-    """ 
-    Recherche, telecharge, assemble data d'une étoile pour un quarter donné et s'adapte a la mission (Kepler, TESS,K2)
+    """
+    Recherche, télécharge et assemble les données de courbe de lumière d'une cible spécifique pour différentes missions.
+
+    Cette fonction s'adapte automatiquement à la mission spécifiée (Kepler, TESS ou K2) 
+    en associant l'indice 'period_index' à l'unité temporelle correcte (Quarter, Sector ou Campaign).
+    Les données sont normalisées individuellement avant d'être fusionnées (stitched) en une série temporelle unique.
+
+    :param star_name: Le nom ou l'identifiant de l'étoile cible (ex: 'Kepler-10', 'TIC 261136679').
+    :type star_name: str
+    :param period_index: L'indice de la fenêtre d'observation. Si None, toutes les données disponibles sont récupérées.
+    :type period_index: int, optionnel
+    :param author: La mission ou le fournisseur de données ('Kepler', 'TESS' ou 'K2'). Par défaut "Kepler".
+    :type author: str
+    :return: Un objet LightCurve unique, fusionné et normalisé, contenant la photométrie de la cible.
+    :rtype: lk.LightCurve
+    :raises ValueError: Si aucune donnée n'est trouvée pour la cible et les paramètres de mission fournis.
+    :raises Exception: Pour les erreurs liées au réseau ou spécifiques à la bibliothèque Lightkurve lors du téléchargement.
+
+    **Exemple :**
+
+    .. code-block:: python
+
+        # Télécharger tous les quarters Kepler pour Kepler-10
+        lc = download_target_data("Kepler-10", author="Kepler")
+        
+        # Télécharger un secteur TESS spécifique
+        lc_tess = download_target_data("Pi Mensae", period_index=1, author="TESS")
     """
     try :
 

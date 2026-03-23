@@ -6,9 +6,27 @@ logger = logging.getLogger(__name__)
 
 def _strip_astropy_masks(lc: lk.LightCurve) -> lk.LightCurve:
     """
-    Convertit les maskedNDArray Astropy en numpy arrays 
-    pour eviter le bug 'cannot write to unmasked output'
-    introduit par Astropy 5.0 avec les MaskedQuantity
+    Convertit les tableaux masqués d'Astropy en tableaux NumPy standards pour résoudre les conflits d'écriture mémoire.
+
+    Cette fonction technique extrait les valeurs brutes (time, flux, flux_err) afin de contourner le bug
+    'cannot write to unmasked output' introduit par les MaskedQuantity dans Astropy 5.0+.
+    Elle garantit que la courbe de lumière est reconstruite sur une nouvelle allocation mémoire, 
+    permettant des opérations itératives de masquage sans erreurs de protection de données.
+
+    :param lc: La courbe de lumière source contenant des données potentiellement masquées par Astropy.
+    :type lc: lk.LightCurve
+    :return: Une nouvelle instance de LightCurve reconstruite avec des tableaux NumPy classiques (non masqués).
+    :rtype: lk.LightCurve
+
+    **Exemple :**
+
+    .. code-block:: python
+
+        # Après avoir appliqué un masque de transit
+        lc_filtree = lc[~mon_masque]
+        
+        # Nettoyage de la structure mémoire pour permettre une nouvelle détection BLS
+        lc_propre = _strip_astropy_masks(lc_filtree)
     """
    
     return lk.LightCurve(
@@ -19,8 +37,38 @@ def _strip_astropy_masks(lc: lk.LightCurve) -> lk.LightCurve:
     )
 
 def lc_cleaner(lc : lk.LightCurve, window_length:int = 801, sigma: float = 5) -> lk.LightCurve :
-    """ 
-    Nettoie la courbe de lumière. Attention : window_length doit être > 3x la durée d'un transit. 
+    """
+    Nettoie et détrend la courbe de lumière pour isoler les signaux de transit.
+
+    Cette fonction applique un filtre de Savitzky-Golay via la méthode ``flatten()`` pour corriger 
+    les variations de flux à basse fréquence (variabilité stellaire, dérives instrumentales). 
+    Elle procède ensuite à un sigma-clipping pour supprimer les points aberrants (outliers).
+    Enfin, elle appelle ``_strip_astropy_masks`` pour garantir une structure mémoire NumPy propre.
+
+    .. note::
+        Pour préserver l'intégrité du signal, ``window_length`` doit impérativement être supérieur 
+        à 3 fois la durée attendue du transit le plus long. Une fenêtre trop courte risque de 
+        "lisser" le transit et d'en réduire artificiellement la profondeur.
+
+    :param lc: La courbe de lumière brute ou pré-traitée à nettoyer.
+    :type lc: lk.LightCurve
+    :param window_length: Nombre de points pour la fenêtre de lissage (doit être un entier impair).
+    :type window_length: int
+    :param sigma: Seuil d'écarts-types utilisé pour le rejet des points aberrants.
+    :type sigma: float
+    :return: Une courbe de lumière normalisée, détrendée et sans outliers.
+    :rtype: lk.LightCurve
+    :raises Exception: Si une erreur survient lors du processus de filtrage ou de normalisation.
+
+    **Exemple :**
+
+    .. code-block:: python
+
+        # Nettoyage avec une fenêtre large pour une étoile stable
+        lc_propre = lc_cleaner(lc_raw, window_length=801, sigma=5.0)
+        
+        # Pour une étoile très active, on pourrait réduire window_length
+        # tout en restant vigilant sur la durée du transit.
     """
     try: 
         #On garde le nombre de point pour verifier que le cleaner n'a pas enlevé tout la courbe par erreur
