@@ -17,19 +17,123 @@ logger = logging.getLogger("ExoHunter")
 
 
 def _ask_float(prompt: str, default: float) -> float:
-    """Demande un float à l'utilisateur avec valeur par défaut."""
+    """
+    Sollicite une saisie de type flottant auprès de l'utilisateur avec une valeur par défaut.
+
+    Cette fonction utilitaire affiche un message d'invite dans la console. Si l'utilisateur 
+    valide sans rien saisir (chaîne vide), la valeur spécifiée dans l'argument ``default`` 
+    est retournée. Elle est particulièrement utile pour les paramètres physiques comme 
+    le rayon stellaire ou les seuils de détection.
+
+    :param prompt: Le message d'invite à afficher à l'écran.
+    :type prompt: str
+    :param default: La valeur flottante à utiliser par défaut.
+    :type default: float
+    :return: Le nombre flottant saisi par l'utilisateur ou la valeur par défaut.
+    :rtype: float
+    :raises ValueError: Si la saisie de l'utilisateur contient des caractères non numériques 
+                        ne pouvant pas être convertis en flottant.
+
+    **Exemple :**
+
+    .. code-block:: python
+
+        # Demande le rayon de l'étoile avec 1.0 par défaut
+        r_star = _ask_float("Rayon de l'étoile (R_sun)", 1.0)
+        
+        # Si l'utilisateur valide directement, r_star vaudra 1.0
+    """
     val = input(f"{prompt} [Défaut: {default}] : ")
     return float(val) if val.strip() else default
 
 def _ask_int(prompt: str, default: int) -> int:
-    """Demande un entier à l'utilisateur avec valeur par défaut."""
+    """
+    Sollicite une saisie de type entier auprès de l'utilisateur avec une valeur par défaut.
+
+    Cette fonction utilitaire affiche un message d'invite dans la console et récupère l'entrée 
+    standard. Si l'utilisateur valide sans rien saisir (chaîne vide), la valeur fournie 
+    dans l'argument ``default`` est retournée.
+
+    :param prompt: Le message d'invite à afficher à l'écran.
+    :type prompt: str
+    :param default: La valeur entière à utiliser par défaut.
+    :type default: int
+    :return: L'entier saisi par l'utilisateur ou la valeur par défaut.
+    :rtype: int
+    :raises ValueError: Si la saisie de l'utilisateur n'est pas convertible en nombre entier.
+
+    **Exemple :**
+
+    .. code-block:: python
+
+        # Demande le nombre de planètes avec 5 par défaut
+        nb_planetes = _ask_int("Nombre de planètes à chercher", 5)
+        
+        # Si l'utilisateur appuie sur Entrée sans saisir de texte, nb_planetes = 5
+    """"""
+    Sollicite une saisie de type entier auprès de l'utilisateur avec une valeur par défaut.
+
+    Cette fonction utilitaire affiche un message d'invite dans la console et récupère l'entrée 
+    standard. Si l'utilisateur valide sans rien saisir (chaîne vide), la valeur fournie 
+    dans l'argument ``default`` est retournée.
+
+    :param prompt: Le message d'invite à afficher à l'écran.
+    :type prompt: str
+    :param default: La valeur entière à utiliser par défaut.
+    :type default: int
+    :return: L'entier saisi par l'utilisateur ou la valeur par défaut.
+    :rtype: int
+    :raises ValueError: Si la saisie de l'utilisateur n'est pas convertible en nombre entier.
+
+    **Exemple :**
+
+    .. code-block:: python
+
+        # Demande le nombre de planètes avec 5 par défaut
+        nb_planetes = _ask_int("Nombre de planètes à chercher", 5)
+        
+        # Si l'utilisateur appuie sur Entrée sans saisir de texte, nb_planetes = 5
+    """
     val = input(f"{prompt} [Défaut: {default}] : ")
     return int(val) if val.strip() else default
 
 
 def run_pipeline():
     """
-    Exécute le pipeline complet de détection d'exoplanètes.
+    Orchestre le pipeline complet de détection et de caractérisation d'exoplanètes de manière interactive.
+
+    Cette fonction pilote l'interface utilisateur en ligne de commande (CLI) pour configurer 
+    et exécuter les quatre étapes critiques de l'analyse :
+    
+    1. **Acquisition** : Téléchargement des données via ``download_target_data``.
+    2. **Prétraitement** : Nettoyage et détrendage via ``lc_cleaner``.
+    3. **Recherche** : Détection itérative par algorithme BLS via ``planet_detector``.
+    4. **Caractérisation** : Calcul des rayons et classification physique via ``analyze_planets_metrics``.
+
+    Le pipeline intègre des filtres de sécurité contre les alias harmoniques et fournit une 
+    classification automatique des candidats (Super-Terre, Mini-Neptune, etc.) basée sur 
+    le rayon planétaire calculé. Des avertissements astrophysiques sont générés en cas de 
+    suspicion de faux positifs (binaires à éclipses ou artefacts de bruit).
+
+    :raises ValueError: Si le nom de la cible est manquant ou si les saisies numériques sont invalides.
+    :raises KeyboardInterrupt: Permet une interruption propre par l'utilisateur (Ctrl+C).
+    :raises Exception: Capture et logue toute erreur systémique ou liée aux bibliothèques astrophysiques.
+
+    **Déroulement technique :**
+
+    .. code-block:: text
+
+        1. Saisie des paramètres cibles (Nom, Mission, Rayon stellaire).
+        2. Configuration optionnelle des hyperparamètres experts (Sigma, Window, SNR).
+        3. Exécution séquentielle des modules de 'src/'.
+        4. Affichage d'un rapport détaillé par candidat détecté.
+
+    **Exemple d'utilisation :**
+
+    .. code-block:: python
+
+        if __name__ == "__main__":
+            run_pipeline()
     """
     print("\n" + "="*60)
     print("          EXOHUNTER v2.0")
