@@ -1,8 +1,22 @@
 import lightkurve as lk
 import logging
-
+import numpy as np
 ##gestion d'erreur
 logger = logging.getLogger(__name__)
+
+def _strip_astropy_masks(lc: lk.LightCurve) -> lk.LightCurve:
+    """
+    Convertit les maskedNDArray Astropy en numpy arrays 
+    pour eviter le bug 'cannot write to unmasked output'
+    introduit par Astropy 5.0 avec les MaskedQuantity
+    """
+   
+    return lk.LightCurve(
+        time=np.asarray(lc.time.value, dtype=float),
+        flux=np.asarray(lc.flux.value, dtype=float),
+        flux_err=np.asarray(lc.flux_err.value, dtype=float),
+        meta=lc.meta
+    )
 
 def lc_cleaner(lc : lk.LightCurve, window_length:int = 801, sigma: float = 5) -> lk.LightCurve :
     """ 
@@ -19,7 +33,7 @@ def lc_cleaner(lc : lk.LightCurve, window_length:int = 801, sigma: float = 5) ->
         
         logger.info(f"Nettoyage terminé : {initial_length - final_length} points retirés.")
 
-        return lc_clean
+        return _strip_astropy_masks(lc_clean)
     
     except Exception as e:
         logger.error(f"Erreur lors du nettoyage de la courbe : {e}")

@@ -48,37 +48,56 @@ def analyze_planets_metrics(lc : lk.LightCurve,planets_list : list, star_radius:
         for j, planet_a_masquer in enumerate(planets_list):
             if j == i:
                 continue
-            actual_lc = mask_planet(actual_lc, planet_a_masquer)
+            # On ne masque que les planètes de période proche (ratio < 5)
+            # Les périodes très différentes s'annulent dans le repliement de phase
+            ratio = max(planet["period"], planet_a_masquer["period"]) / min(planet["period"], planet_a_masquer["period"])
+            if ratio < 5:
+                actual_lc = mask_planet(actual_lc, planet_a_masquer)
+            else:
+                logger.info(f"Masquage ignoré pour planète {j+1} (ratio de période = {ratio:.1f}x — moyenne en phase).")
             
 
         #calcul résolution et repliement
-        folded = actual_lc.fold(period=planet["period"], epoch_time=planet["transit_time"])
-        
-        bin_size = _get_bin_size(actual_lc,planet,points_per_transit)
-        phase_binned = folded.bin(time_bin_size=bin_size).remove_nans()
-        
-        
-        phase_duration = planet["duration"] / planet["period"]
-        phase_values = phase_binned.time.value
+             # Extraction numpy pure
+        time = np.asarray(actual_lc.time.value, dtype=float)
+        flux = np.asarray(actual_lc.flux.value, dtype=float)
 
-        #fond du transit, 80% de la durée pour éviter les bords
-        mask_in = np.abs(phase_values) < (phase_duration * 0.4)
-        
-        #Masque exterieur du transit (entre 0.6x et 1.5x la durée)
-        mask_out = (np.abs(phase_values) > (phase_duration * 0.6)) & (np.abs(phase_values) < (phase_duration * 1.5))
-        
-        # Calcul du flux moyen au fond
-        # On utilise la médiane sur ces points précis pour ignorer le bruit
+        # Repliement de phase manuel (centré sur le transit)
+        phase = (time - planet["transit_time"] + planet["period"] / 2) % planet["period"] - planet["period"] / 2
+        # Conversion en unité de phase (fraction de période)
+        phase_norm = phase / planet["period"]
+
+        # Binning manuel
+        bin_size = _get_bin_size(actual_lc, planet, points_per_transit)
+        bin_edges = np.arange(-0.5, 0.5 + bin_size, bin_size)
+        bin_flux = np.full(len(bin_edges) - 1, np.nan)
+        bin_phase = np.full(len(bin_edges) - 1, np.nan)
+
+        for k in range(len(bin_edges) - 1):
+            in_bin = (phase_norm >= bin_edges[k]) & (phase_norm < bin_edges[k + 1])
+            if np.sum(in_bin) > 0:
+                bin_flux[k] = np.nanmedian(flux[in_bin])
+                bin_phase[k] = (bin_edges[k] + bin_edges[k + 1]) / 2
+
+        # Nettoyage des bins vides
+        valid = np.isfinite(bin_flux)
+        bin_flux = bin_flux[valid]
+        bin_phase = bin_phase[valid]
+
+        # Calcul de profondeur
+        phase_duration = planet["duration"] / planet["period"]
+        mask_in = np.abs(bin_phase) < (phase_duration * 0.4)
+        mask_out = (np.abs(bin_phase) > (phase_duration * 0.6)) & (np.abs(bin_phase) < (phase_duration * 1.5))
+
         if np.sum(mask_in) > 0 and np.sum(mask_out) > 0:
-            flux_in = np.nanmedian(phase_binned.flux[mask_in])
-            flux_out = np.nanmedian(phase_binned.flux[mask_out])
+            flux_in = np.nanmedian(bin_flux[mask_in])
+            flux_out = np.nanmedian(bin_flux[mask_out])
             profondeur = max(0, 1.0 - (flux_in / flux_out))
         else:
-            # Sécurité si aucun point n'est dans la zone
-            logger.warning(f"Candidat {i+1}: Binning trop large, calcul via percentiles.")
-            profondeur = max(0, 1.0 - np.nanpercentile(phase_binned.flux, 1))
+            logger.warning(f"Candidat {i+1}: Binning insuffisant, fallback sur depth_bls.")
+            profondeur = planet["depth_bls"]
 
-        # Rp/Rs = sqrt(profondeur)
+                # Rp/Rs = sqrt(profondeur)
         ratio_rayons = np.sqrt(profondeur)
 
         # 1 Rsun = 109.12 Rearth. Formule : Rp = Ratio * Rs * 109.12
