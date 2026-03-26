@@ -118,8 +118,7 @@ def analyze_planets_metrics(lc : lk.LightCurve,planets_list : list, star_radius:
         for j, planet_a_masquer in enumerate(planets_list):
             if j == i:
                 continue
-            # On ne masque que les planètes de période proche (ratio < 5)
-            # Les périodes très différentes s'annulent dans le repliement de phase
+            # on masque que les planètes de période proche (ratio < 5)
             ratio = max(planet["period"], planet_a_masquer["period"]) / min(planet["period"], planet_a_masquer["period"])
             if ratio < 5:
                 actual_lc = mask_planet(actual_lc, planet_a_masquer)
@@ -173,7 +172,7 @@ def analyze_planets_metrics(lc : lk.LightCurve,planets_list : list, star_radius:
         # 1 Rsun = 109.12 Rearth. Formule : Rp = Ratio * Rs * 109.12
         rayon_terrestre = ratio_rayons * star_radius * 109.12
         
-        # Mise à jour du dictionnaire
+        # Mise à jour du dico
         planet["rayon_terrestre"] = round(rayon_terrestre, 2)
         planet["rayon_km"] = round(rayon_terrestre * 6371, 0)
         #convention scientifique = combien de fois elle cache un millionième de la lumière de son étoile

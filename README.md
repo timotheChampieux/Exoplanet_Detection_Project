@@ -220,8 +220,9 @@ Exoplanet_Detection_Project/
 │    └── test_notebook.ipynb       # Premier test manuel avant de  passer a la création de Exohunter (pour prendre en main lightkurve)
 │
 ├── docs/
-│   ├── definition.md    # Définitions des termes techniques et scientifiques
-│   └── AUDIT_EXOHUNTER.md        # Rapport d'audit (domaine de validité, limites)
+│   ├── DEFINITIOn.md    # Définitions des termes techniques et scientifiques
+│   ├── AUDIT_EXOHUNTER.md        # Rapport d'audit (domaine de validité, limites)
+    └── DOCUMENTATION_TECHNIQUE.md #expliquation des fonctions et guide développeur pour reprendre le code.
 │
 ├── requirements.txt
 └── README.md

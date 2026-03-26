@@ -74,7 +74,7 @@ def lc_cleaner(lc : lk.LightCurve, window_length:int = 801, sigma: float = 5) ->
         #On garde le nombre de point pour verifier que le cleaner n'a pas enlevé tout la courbe par erreur
         initial_length = len(lc)
         
-        #on nettoie (outliers retire les pics de lumière parasite et flatten corrige les variation de l'etoile)
+        #on nettoie (outliers retire les pics de lumière parasite et flatten corrige les variation de l'etoile
         lc_clean = lc.flatten(window_length=window_length).remove_outliers(sigma=sigma)
         
         final_length = len(lc_clean)

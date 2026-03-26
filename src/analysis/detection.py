@@ -44,19 +44,19 @@ def _run_bls_analysis(lc : lk.LightCurve, frequency_factor: int = 10, minimum_pe
         if results["snr"] > 7.1:
             print(f"Signal trouvé à P = {results['period']:.2f} jours")
     """
-    # Sécurité : vérifier qu'il reste assez de points pour un BLS
+    # Securité : verifier qu'il ya assez de points pour un BLS
     if len(lc) < 50:
         logger.warning(f"Courbe trop courte ({len(lc)} points) pour un BLS fiable.")
         return {"snr": 0, "period": 0, "transit_time": 0, "duration": 0,
                 "max_power": 0, "depth_bls": 0, "odd_even_ratio": 1.0}
 
-     #beaucoup plus précis que np.linspace pour détecter des transits courts.
+     #beaucoup plus précis que np.linspace pour détecter les transits courts.
     bls = lc.to_periodogram(method='bls', minimum_period=minimum_period, maximum_period=(lc.time.value.max() - lc.time.value.min())/min_transits, frequency_factor=frequency_factor)    #on recup le meilleur condidat
     best_period = bls.period_at_max_power
     best_t0 = bls.transit_time_at_max_power
     best_duration = bls.duration_at_max_power
 
-    # Calcul des stats pour obtenir le SNR correct
+    # Calcul des stats pour obtenir le bon SNR 
     stats = bls.compute_stats(period=best_period, duration=best_duration, transit_time=best_t0)
     
     odd_even_ratio = stats["depth_odd"][0] / stats["depth_even"][0] if stats["depth_even"][0] != 0 else float('inf')    
@@ -186,8 +186,8 @@ def planet_detector(lc : lk.LightCurve, max_planets=10, frequency_factor: int = 
 
     planets_found = []
     current_lc = lc
-    harmonic_alias_count = 0  # Compteur pour les vrais alias harmoniques (2x, 3x...)
-    max_iterations = 2 * max_planets + 6  # Sécurité anti-boucle infinie
+    harmonic_alias_count = 0  # Compteur pour les vrais alias harmoniques 
+    max_iterations = 2 * max_planets + 6 
     iteration = 0
     while len(planets_found) < max_planets : 
         iteration += 1
@@ -201,7 +201,7 @@ def planet_detector(lc : lk.LightCurve, max_planets=10, frequency_factor: int = 
         logger.info(f"Analyse BLS terminée.")
         #critère de validation
         if result["snr"] > snr_threshold :
-                        #Filtre alias : rejette si la période est trop proche d'une planète déjà trouvée
+                        #Filtre alias : rejette si la période est trop proche d'une planète déjà trouver
             is_alias = False
             matched_harmonic = None
             for known in planets_found:
@@ -217,8 +217,8 @@ def planet_detector(lc : lk.LightCurve, max_planets=10, frequency_factor: int = 
             if is_alias:
                 logger.warning(f"Signal rejeté (P={result['period']:.4f}j) — alias de P={known['period']:.4f}j (ratio={matched_harmonic}).")
                 harmonic_alias_count += 1
-                # Pour ratio≈1, on masque avec la durée de la planète originale
-                # car le BLS sur le résidu peut retourner une durée aberrante
+                #Pour ratio+-1, on masque avec la durée de la planète originale
+                # car le BLS sur le résidu peut retourner une durée de fou
                 if matched_harmonic == 1:
                     result["duration"] = known["duration"]
                 current_lc = mask_planet(current_lc, result, mask_width=mask_width)
@@ -226,7 +226,7 @@ def planet_detector(lc : lk.LightCurve, max_planets=10, frequency_factor: int = 
                     logger.info(f"Fin de recherche : signal épuisé ({max_alias} alias consécutifs).")
                     break
                 continue
-            # Test binaire à éclipses AVANT ajout dans la liste
+            # Test binaire a éclipes avant ajout dans la liste
             baseline = current_lc.time.value.max() - current_lc.time.value.min()
             n_transits = baseline / result["period"]
             if result["odd_even_ratio"] < 0:
